@@ -407,6 +407,8 @@ Song 3.mp3</div>
         confirming skips forward. No special naming needed.
       </p>
 
+      <hr class="divider" />
+
       <!-- ── SPECIAL TRACKS ── -->
       <h3>Special tracks</h3>
       <p>
@@ -556,6 +558,27 @@ Song 3.mp3</div>
         menu. Add as many question sub-folders as you like — the numbering
         controls the order.
       </p>
+      
+      <hr class="divider" />
+
+      <!-- ── CHECKPOINTS ── -->
+      <h3>Checkpoints</h3>
+      <p>
+        A <em>checkpoint</em> lets the listener jump straight to a particular
+        track using the Yoto app's "go to" feature. You don't need to do
+        anything special to create one — just use a
+        <code>#01</code>–<code>#98</code> file name in the <strong>root folder</strong>.
+      </p>
+
+      <h4>Example</h4>
+      <div class="file-tree">#00 Welcome.mp3
+#01 Book One.mp3       ← checkpoint 1
+#02 Book Two.mp3       ← checkpoint 2
+#01 Book One/
+  Track 1.mp3
+  Track 2.mp3</div>
+
+      <hr class="divider" />
 
       <!-- ── ICON MAPPING ── -->
       <h3>Icon mapping</h3>
@@ -864,7 +887,7 @@ Song 3.mp3</div>
       if (!rootEntry) return checkpoints;
 
       const rootSpecialTracks = rootEntry.audioFiles
-        .filter((f) => SPECIAL_PREFIX_RE.test(f.filename))
+        .filter((f) => SPECIAL_PREFIX_RE.test(f.filename) && !f.filename.startsWith("#00"))
         .sort((a, b) => a.filename < b.filename ? -1 : a.filename > b.filename ? 1 : 0);
 
       for (const track of rootSpecialTracks) {
