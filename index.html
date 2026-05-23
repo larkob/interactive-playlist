@@ -1,0 +1,1482 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yoto CSV Generator</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #f5f5f5;
+        color: #222;
+        margin: 0;
+        padding: 2rem;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 1.5rem;
+        color: #111;
+      }
+
+      .field-group {
+        margin-bottom: 1.25rem;
+      }
+
+      label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        color: #444;
+      }
+
+      .controls-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #f0f4ff;
+        border: 1px solid #c7d7f9;
+        border-radius: 8px;
+        padding: 0.6rem 0.9rem;
+        max-width: 400px;
+      }
+
+      .controls-sides {
+        display: flex;
+        gap: 1.25rem;
+        flex: 1;
+        font-size: 0.875rem;
+        color: #333;
+      }
+
+      .controls-side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+
+      .controls-side-label {
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #555;
+      }
+
+      .controls-side-action {
+        font-size: 0.9rem;
+        color: #111;
+      }
+
+      .controls-divider {
+        width: 1px;
+        align-self: stretch;
+        background: #c7d7f9;
+      }
+
+      #btn-swap {
+        background: #2563eb;
+        color: #fff;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 5px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      #btn-swap:hover {
+        background: #1d4ed8;
+      }
+
+      button {
+        display: inline-block;
+        padding: 0.6rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      #btn-select {
+        background: #2563eb;
+        color: #fff;
+      }
+
+      #btn-select:hover:not(:disabled) {
+        background: #1d4ed8;
+      }
+
+      #btn-select:disabled {
+        background: #93c5fd;
+        cursor: not-allowed;
+      }
+
+      #folder-name {
+        font-size: 0.875rem;
+        color: #555;
+        margin-top: 0.5rem;
+        min-height: 1.25rem;
+      }
+
+      #status {
+        font-size: 0.875rem;
+        color: #b91c1c;
+        margin-top: 1rem;
+        min-height: 1.25rem;
+        white-space: pre-wrap;
+      }
+
+      #status.info {
+        color: #15803d;
+      }
+
+      #download-section {
+        margin-top: 1.25rem;
+      }
+
+      #btn-download {
+        background: #16a34a;
+        color: #fff;
+        text-decoration: none;
+        padding: 0.6rem 1.25rem;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      #btn-download:hover {
+        background: #15803d;
+      }
+
+      #csv-preview {
+        margin-top: 1.75rem;
+      }
+
+      #csv-preview h2 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #444;
+        margin: 0 0 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .csv-table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      }
+
+      .csv-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+        white-space: nowrap;
+      }
+
+      .csv-table thead th {
+        background: #f8fafc;
+        color: #555;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.45rem 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: left;
+      }
+
+      .csv-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+      }
+
+      .csv-table tbody td {
+        padding: 0.35rem 0.75rem;
+        color: #333;
+        border-bottom: 1px solid #f0f4f8;
+      }
+
+      .csv-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      /* ── Help button ── */
+      #btn-help {
+        background: none;
+        border: 1px solid #c7d7f9;
+        color: #2563eb;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.3rem 0.7rem;
+        border-radius: 5px;
+        cursor: pointer;
+        float: right;
+        margin-top: -0.25rem;
+      }
+
+      #btn-help:hover {
+        background: #f0f4ff;
+      }
+
+      /* ── Modal overlay ── */
+      .help-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 100;
+        overflow-y: auto;
+        padding: 2rem 1rem;
+      }
+
+      .help-overlay.open {
+        display: block;
+      }
+
+      .help-modal {
+        background: #fff;
+        border-radius: 10px;
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 2rem 2.25rem 2.5rem;
+        position: relative;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+      }
+
+      .help-modal h2 {
+        font-size: 1.15rem;
+        margin: 0 0 1.25rem;
+        color: #111;
+      }
+
+      .help-modal h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1d4ed8;
+        margin: 1.5rem 0 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .help-modal h4 {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #333;
+        margin: 1rem 0 0.3rem;
+      }
+
+      .help-modal p {
+        font-size: 0.875rem;
+        color: #444;
+        line-height: 1.6;
+        margin: 0 0 0.6rem;
+      }
+
+      .help-modal ul {
+        margin: 0.25rem 0 0.6rem 1.1rem;
+        padding: 0;
+      }
+
+      .help-modal li {
+        font-size: 0.875rem;
+        color: #444;
+        line-height: 1.6;
+        margin-bottom: 0.2rem;
+      }
+
+      .help-modal .file-tree {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 0.65rem 0.9rem;
+        font-family: ui-monospace, "Cascadia Code", monospace;
+        font-size: 0.78rem;
+        color: #334155;
+        line-height: 1.7;
+        margin: 0.4rem 0 0.75rem;
+        white-space: pre;
+      }
+
+      .help-modal .tag {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.1rem 0.45rem;
+        border-radius: 4px;
+        vertical-align: middle;
+        margin-left: 0.3rem;
+        letter-spacing: 0.03em;
+      }
+
+      .tag-regular {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .tag-intro {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .tag-choice {
+        background: #fef9c3;
+        color: #854d0e;
+      }
+      .tag-answer {
+        background: #fce7f3;
+        color: #9d174d;
+      }
+
+      .help-modal .divider {
+        border: none;
+        border-top: 1px solid #e2e8f0;
+        margin: 1.5rem 0 0;
+      }
+
+      #btn-help-close {
+        position: absolute;
+        top: 1rem;
+        right: 1.25rem;
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        color: #888;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+      }
+
+      #btn-help-close:hover {
+        color: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── Help modal ── -->
+    <div
+      class="help-overlay"
+      id="help-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-title"
+    >
+      <div class="help-modal">
+        <button id="btn-help-close" aria-label="Close help">&#x2715;</button>
+        <h2 id="help-title">How to organise your folder</h2>
+
+        <!-- ── REGULAR TRACKS ── -->
+        <h3>Regular tracks</h3>
+        <p>
+          Any audio file whose name does <strong>not</strong> start with
+          <code>#00</code>–<code>#99</code> is a <em>regular</em> track.
+          <span class="tag tag-regular">regular</span>
+        </p>
+        <p>
+          Regular tracks play one after another. The Yoto knob moves
+          <strong>forward</strong> (confirm/continue) to the next track and
+          <strong>backward</strong> (rotate/return) to the previous one. When
+          the last track in a folder finishes it returns to the parent menu
+          automatically.
+        </p>
+
+        <h4>Example — a single album</h4>
+        <div class="file-tree">Song 1.mp3
+Song 2.mp3
+Song 3.mp3</div>
+        <p>
+          Tracks play in alphabetical order. Rotating goes back one track;
+          confirming skips forward. No special naming needed.
+        </p>
+
+        <!-- ── SPECIAL TRACKS ── -->
+        <h3>Special tracks</h3>
+        <p>
+          Prefix a filename with <code>#NN</code> (two digits) to give it a
+          special role. The rest of the filename is up to you (e.g. "#01 Something.mp3", "#01_intro.m4a" and "#01.aac" are all valid names). 
+          Three prefixes are recognised:
+        </p>
+        <ul>
+          <li>
+            <code>#00</code> — <strong>Intro</strong>
+            <span class="tag tag-intro">intro</span> — plays once, then jumps
+            straight to the first choice.
+          </li>
+          <li>
+            <code>#01</code>–<code>#98</code> — <strong>Choice</strong>
+            <span class="tag tag-choice">choice</span> — the listener rotates
+            through these options and confirms to select one.
+          </li>
+          <li>
+            <code>#99</code> — <strong>Answer / Resolution</strong>
+            <span class="tag tag-answer">answer</span> — plays after a choice is
+            confirmed (e.g. the correct answer), then advances automatically.
+          </li>
+        </ul>
+        <p>
+          A folder must use <em>either</em> all regular tracks or all special
+          tracks — mixing the two is not allowed.
+        </p>
+
+        <hr class="divider" />
+
+        <!-- ── USE CASE: BOOK / ALBUM COLLECTION ── -->
+        <h3>Use case — book or album collection</h3>
+        <p>
+          Put each book or album in its own sub-folder. Name the sub-folders
+          <code>#01 Book Title</code>, <code>#02 Book Title</code>, … and add a
+          matching choice track in the root folder with the same number.
+          Confirming a choice dives straight into that book's tracks.
+        </p>
+
+        <h4>Without an intro</h4>
+        <div class="file-tree">#01 Treasure Island.mp3   ← choose this book
+#02 Jungle Book.mp3       ← or this one
+#01/                      ← tracks for Treasure Island
+  Track 1.mp3
+  Track 2.mp3
+#02/                      ← tracks for Jungle Book
+  Track 1.mp3
+  Track 2.mp3</div>
+        <p>
+          The card starts on <em>#01 Treasure Island</em>. Rotate to cycle
+          between books; confirm to start listening. Finishing the last track
+          returns to the book-selection menu.
+        </p>
+
+        <h4>With an intro</h4>
+        <div class="file-tree">#00 intro.mp3             ← "Which book would you like?"
+#01 Treasure Island.mp3
+#02 Jungle Book.mp3
+#01/ …
+#02/ …</div>
+        <p>
+          The intro plays automatically when the card is inserted, then jumps to
+          the first choice. Everything else works the same way.
+        </p>
+
+        <hr class="divider" />
+
+        <!-- ── USE CASE: QUIZ ── -->
+        <h3>Use case — quiz</h3>
+        <p>
+          A quiz question is a folder that contains a <code>#00</code> question
+          track, two or more <code>#NN</code> answer choices, and a
+          <code>#99</code> resolution track that reveals the correct answer.
+        </p>
+        <div class="file-tree">#00 question.mp3        ← "What is the capital of France?"
+#01 choice A.mp3        ← "Paris"
+#02 choice B.mp3        ← "London"
+#99 answer.mp3          ← "Correct! It's Paris."</div>
+        <p>
+          The question plays automatically. The listener rotates through the
+          choices and confirms their answer. The <code>#99</code> answer track
+          plays.
+        </p>
+
+        <hr class="divider" />
+
+        <!-- ── USE CASE: MULTI-LANGUAGE QUIZ ── -->
+        <h3>Use case - multi-language quiz</h3>
+        <p>
+          Wrap the quiz in an outer language-selection layer. The root folder
+          holds one choice track per language; each language folder then
+          contains its own question.
+        </p>
+        <div class="file-tree">#00 intro.mp3             ← "Choose your language"
+#01 choice english.mp3    ← English
+#02 choice french.mp3     ← Français
+#01 EN/                   ← English question
+  #00 question.mp3
+  #01 choice A.mp3
+  #02 choice B.mp3
+  #99 answer.mp3
+#02 FR/                   ← French question
+  #00 question.mp3
+  #01 choice A.mp3
+  #02 choice B.mp3
+  #99 answer.mp3</div>
+        <p>
+          After the intro the listener picks a language. Confirming dives into
+          that language's question folder. When the answer plays, the quiz loops
+          back to the language selector so the card is reusable.
+        </p>
+
+        <hr class="divider" />
+
+        <!-- ── USE CASE: EMPTY FOLDERS FOR SEQUENCING ── -->
+        <h3>Use case - extended multi-language quiz</h3>
+        <p>
+          When a language (or topic) contains <em>many</em> questions, nest each
+          question in its own numbered sub-folder inside the language folder.
+          The language folder itself stays <strong>empty</strong>
+          (no audio files directly inside it) — it acts purely as a container
+          that sequences its children in order.
+        </p>
+        <div class="file-tree">#00 intro.mp3
+#01 choice english.mp3
+#02 choice french.mp3
+#01 EN/                       ← empty — just a container
+  #01 question1/              ← question 1
+    #00 question.mp3
+    #01 choice A.mp3
+    #02 choice B.mp3
+    #99 answer.mp3
+  #02 question2/              ← question 2
+    #00 question.mp3
+    #01 choice A.mp3
+    #02 choice B.mp3
+    #99 answer.mp3
+#02 FR/                       ← same structure in French
+  #01 question1/ …
+  #02 question2/ …</div>
+        <p>
+          After the answer to question 1 plays, the generator automatically
+          advances to question 2, then question 3, and so on. When all questions
+          in a language are done the quiz returns to the language-selection
+          menu. Add as many question sub-folders as you like — the numbering
+          controls the order.
+        </p>
+      </div>
+    </div>
+
+    <div class="container">
+      <h1>
+        Yoto CSV Generator <button id="btn-help" type="button">? Help</button>
+      </h1>
+
+      <div class="field-group">
+        <button id="btn-select" type="button">Select Folder</button>
+        <div id="folder-name"></div>
+      </div>
+
+      <div class="field-group">
+        <label>Controls</label>
+        <div class="controls-row">
+          <div class="controls-sides">
+            <div class="controls-side">
+              <span class="controls-side-label">Left</span>
+              <span class="controls-side-action" id="left-action"
+                >Rotate / Return</span
+              >
+            </div>
+            <div class="controls-divider"></div>
+            <div class="controls-side">
+              <span class="controls-side-label">Right</span>
+              <span class="controls-side-action" id="right-action"
+                >Confirm / Continue</span
+              >
+            </div>
+          </div>
+          <button id="btn-swap" type="button">Switch ⇄</button>
+        </div>
+      </div>
+
+      <div id="status"></div>
+
+      <div id="download-section" style="display: none">
+        <a id="btn-download" href="#" download="playlist.csv"
+          >Download playlist.csv</a
+        >
+      </div>
+
+      <div id="csv-preview" style="display: none">
+        <h2>Preview</h2>
+        <div class="csv-table-wrap">
+          <table class="csv-table">
+            <thead id="csv-thead"></thead>
+            <tbody id="csv-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      // =========================================================================
+      // generator.js — pure functions
+      // =========================================================================
+
+      const IMAGE_EXTS = new Set(["jpg", "jpeg", "png"]);
+      const SKIP_EXTS = new Set(["csv"]);
+
+      /** Matches filenames that begin with a Special_Prefix (#00–#99). */
+      const SPECIAL_PREFIX_RE = /^#(\d{2})(\s|_|-|$)/;
+
+      // ---------------------------------------------------------------------------
+      // File Classification
+      // ---------------------------------------------------------------------------
+
+      function getExt(filename) {
+        const dot = filename.lastIndexOf(".");
+        if (dot < 0) return "";
+        return filename.slice(dot + 1).toLowerCase();
+      }
+
+      function isImageFile(filename) {
+        return IMAGE_EXTS.has(getExt(filename));
+      }
+
+      function isAudioFile(filename) {
+        const ext = getExt(filename);
+        return (
+          !IMAGE_EXTS.has(ext) &&
+          !SKIP_EXTS.has(ext) &&
+          ext !== "" &&
+          filename.at(0) !== "."
+        );
+      }
+
+      // ---------------------------------------------------------------------------
+      // Track Classification
+      // ---------------------------------------------------------------------------
+
+      function classifyTrack(filename) {
+        const match = filename.match(SPECIAL_PREFIX_RE);
+        if (!match) {
+          return { type: "regular", prefix: null, prefixNum: null };
+        }
+        const n = parseInt(match[1], 10);
+        if (n === 0) {
+          return { type: "intro", prefix: "#00", prefixNum: 0 };
+        }
+        if (n === 99) {
+          return { type: "resolution", prefix: "#99", prefixNum: 99 };
+        }
+        const code = match[1];
+        return { type: "choice", prefix: `#${code}`, prefixNum: n };
+      }
+
+      function parseFolderPrefix(folderSegment) {
+        const match = folderSegment.match(SPECIAL_PREFIX_RE);
+        if (!match) return null;
+        const n = parseInt(match[1], 10);
+        return { prefix: `#${match[1]}`, prefixNum: n };
+      }
+
+      // ---------------------------------------------------------------------------
+      // Folder Grouping
+      // ---------------------------------------------------------------------------
+
+      function groupByFolder(entries) {
+        const map = new Map();
+        for (const f of entries) {
+          if (!map.has(f.folderPath)) {
+            map.set(f.folderPath, { audioFiles: [], imageFiles: [] });
+          }
+          const entry = map.get(f.folderPath);
+          if (f.isAudio) entry.audioFiles.push(f);
+          if (f.isImage) entry.imageFiles.push(f);
+        }
+        return map;
+      }
+
+      // ---------------------------------------------------------------------------
+      // Track Ordering
+      // ---------------------------------------------------------------------------
+
+      function sortTracksInFolder(audioFiles) {
+        const classified = audioFiles.map((f) => ({
+          ...f,
+          ...classifyTrack(f.filename),
+        }));
+
+        const hasSpecial = classified.some((f) => f.type !== "regular");
+
+        if (!hasSpecial) {
+          return classified.sort((a, b) =>
+            a.filename < b.filename ? -1 : a.filename > b.filename ? 1 : 0,
+          );
+        }
+
+        const intro = classified.filter((f) => f.type === "intro");
+        const choices = classified
+          .filter((f) => f.type === "choice")
+          .sort((a, b) => a.prefixNum - b.prefixNum);
+        const resolution = classified.filter((f) => f.type === "resolution");
+
+        return [...intro, ...choices, ...resolution];
+      }
+
+      function getFirstTrack(sortedTracks) {
+        if (sortedTracks.length === 0) return null;
+        return sortedTracks[0];
+      }
+
+      // ---------------------------------------------------------------------------
+      // Validation
+      // ---------------------------------------------------------------------------
+
+      function validateFolder(folderPath, audioFiles) {
+        const displayName = folderPath === "" ? "(root)" : folderPath;
+
+        const classified = audioFiles.map((f) => ({
+          ...f,
+          ...classifyTrack(f.filename),
+        }));
+
+        const hasSpecial = classified.some((f) => f.type !== "regular");
+        const hasRegular = classified.some((f) => f.type === "regular");
+
+        if (hasSpecial && hasRegular) {
+          throw new Error(
+            `Folder "${displayName}" mixes regular and special tracks`,
+          );
+        }
+
+        if (hasSpecial) {
+          const seen = new Map();
+          for (const f of classified) {
+            if (f.prefix !== null) {
+              if (seen.has(f.prefix)) {
+                throw new Error(
+                  `Duplicate prefix "${f.prefix}" in folder "${displayName}"`,
+                );
+              }
+              seen.set(f.prefix, f.filename);
+            }
+          }
+
+          const hasIntro = classified.some((f) => f.type === "intro");
+          const hasChoice = classified.some((f) => f.type === "choice");
+          if (hasIntro && !hasChoice) {
+            throw new Error(
+              `Folder "${displayName}" has an intro track but no choice tracks`,
+            );
+          }
+        }
+      }
+
+      function validateAllFolders(folderMap) {
+        const paths = Array.from(folderMap.keys());
+        const nonRoot = paths
+          .filter((p) => p !== "")
+          .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+        const ordered = paths.includes("") ? ["", ...nonRoot] : nonRoot;
+
+        for (const folderPath of ordered) {
+          const entry = folderMap.get(folderPath);
+          validateFolder(folderPath, entry.audioFiles);
+        }
+      }
+
+      // ---------------------------------------------------------------------------
+      // Sub-folder Discovery
+      // ---------------------------------------------------------------------------
+
+      function getImmediateSubFolders(parentFolderPath, folderMap) {
+        const prefix = parentFolderPath ? parentFolderPath + "/" : "";
+        const subNames = new Set();
+
+        for (const fp of folderMap.keys()) {
+          if (!fp.startsWith(prefix)) continue;
+          const rest = fp.slice(prefix.length);
+          if (!rest) continue;
+          const firstSegment = rest.split("/")[0];
+          subNames.add(firstSegment);
+        }
+
+        return Array.from(subNames).sort((a, b) =>
+          a < b ? -1 : a > b ? 1 : 0,
+        );
+      }
+
+      function getFirstTrackOfFolder(folderPath, folderMap) {
+        const entry = folderMap.get(folderPath);
+        if (entry && entry.audioFiles.length > 0) {
+          const sorted = sortTracksInFolder(entry.audioFiles);
+          const first = getFirstTrack(sorted);
+          if (first) return first.relPath;
+        }
+
+        const subFolders = getImmediateSubFolders(folderPath, folderMap);
+        for (const sub of subFolders) {
+          const childPath = folderPath ? `${folderPath}/${sub}` : sub;
+          const first = getFirstTrackOfFolder(childPath, folderMap);
+          if (first) return first;
+        }
+
+        return null;
+      }
+
+      // ---------------------------------------------------------------------------
+      // Checkpoint Assignment
+      // ---------------------------------------------------------------------------
+
+      function assignCheckpoints(folderMap) {
+        const checkpoints = new Map();
+        let counter = 1;
+
+        const topLevelSubFolders = getImmediateSubFolders("", folderMap);
+        for (const sub of topLevelSubFolders) {
+          const firstTrack = getFirstTrackOfFolder(sub, folderMap);
+          if (firstTrack) {
+            checkpoints.set(firstTrack, counter++);
+          }
+        }
+
+        return checkpoints;
+      }
+
+      // ---------------------------------------------------------------------------
+      // Icon Resolution
+      // ---------------------------------------------------------------------------
+
+      function buildIconMap(folderMap) {
+        const iconMap = new Map();
+
+        for (const [folderPath, entry] of folderMap.entries()) {
+          for (const img of entry.imageFiles) {
+            const ext = getExt(img.filename);
+            const baseName = img.filename.slice(
+              0,
+              img.filename.length - ext.length - 1,
+            );
+            const key = `${folderPath}|${baseName}`;
+            iconMap.set(key, img.relPath);
+          }
+        }
+
+        return iconMap;
+      }
+
+      function resolveIcon(track, iconMap) {
+        const ext = getExt(track.filename);
+        const baseName = track.filename.slice(
+          0,
+          track.filename.length - ext.length - 1,
+        );
+        const key = `${track.folderPath}|${baseName}`;
+        return iconMap.get(key) || "";
+      }
+
+      // ---------------------------------------------------------------------------
+      // Navigation Target Resolution
+      // ---------------------------------------------------------------------------
+
+      function resolveChoiceConfirmTarget(
+        track,
+        sortedFolderTracks,
+        folderMap,
+      ) {
+        const parentFolderPath = track.folderPath;
+        const subFolders = getImmediateSubFolders(parentFolderPath, folderMap);
+
+        for (const sub of subFolders) {
+          const fp = parseFolderPrefix(sub);
+          if (fp && fp.prefixNum === track.prefixNum) {
+            const childFolderPath = parentFolderPath
+              ? `${parentFolderPath}/${sub}`
+              : sub;
+            const firstTrack = getFirstTrackOfFolder(
+              childFolderPath,
+              folderMap,
+            );
+            if (firstTrack) return firstTrack;
+          }
+        }
+
+        for (const sub of subFolders) {
+          const fp = parseFolderPrefix(sub);
+          if (fp && fp.prefixNum === 99) {
+            const childFolderPath = parentFolderPath
+              ? `${parentFolderPath}/${sub}`
+              : sub;
+            const firstTrack = getFirstTrackOfFolder(
+              childFolderPath,
+              folderMap,
+            );
+            if (firstTrack) return firstTrack;
+          }
+        }
+
+        const resFile = sortedFolderTracks.find((t) => t.type === "resolution");
+        if (resFile) return resFile.relPath;
+
+        return "";
+      }
+
+      function resolveChoiceRotateTarget(track, sortedFolderTracks) {
+        const choices = sortedFolderTracks.filter((t) => t.type === "choice");
+        const idx = choices.findIndex((t) => t.relPath === track.relPath);
+        if (idx < 0) return "";
+        const next = choices[(idx + 1) % choices.length];
+        return next.relPath;
+      }
+
+      function resolveRegularEndTarget(track, folderMap) {
+        const folderParts = track.folderPath.split("/");
+        const subFolderSegment = folderParts[folderParts.length - 1];
+        const parentFolderPath = folderParts.slice(0, -1).join("/");
+
+        const parentEntry = folderMap.get(parentFolderPath);
+        if (!parentEntry) return "";
+
+        const parentTracks = sortTracksInFolder(parentEntry.audioFiles);
+
+        const intro = parentTracks.find((t) => t.type === "intro");
+        if (intro) return intro.relPath;
+
+        const fp = parseFolderPrefix(subFolderSegment);
+        if (fp && fp.prefixNum !== null) {
+          const matchingChoice = parentTracks.find(
+            (t) => t.type === "choice" && t.prefixNum === fp.prefixNum,
+          );
+          if (matchingChoice) return matchingChoice.relPath;
+        }
+
+        return "";
+      }
+
+      function resolveRegularConfirmTarget(
+        track,
+        sortedFolderTracks,
+        folderMap,
+      ) {
+        const idx = sortedFolderTracks.findIndex(
+          (t) => t.relPath === track.relPath,
+        );
+        if (idx < 0) return "";
+
+        if (idx < sortedFolderTracks.length - 1) {
+          return sortedFolderTracks[idx + 1].relPath;
+        }
+
+        return resolveRegularEndTarget(track, folderMap);
+      }
+
+      function resolveRegularRotateTarget(
+        track,
+        sortedFolderTracks,
+        folderMap,
+      ) {
+        const idx = sortedFolderTracks.findIndex(
+          (t) => t.relPath === track.relPath,
+        );
+        if (idx < 0) return "";
+
+        if (idx > 0) {
+          return sortedFolderTracks[idx - 1].relPath;
+        }
+
+        return resolveRegularEndTarget(track, folderMap);
+      }
+
+      function resolveResolutionAutoAdvance(track, folderMap) {
+        const folderParts = track.folderPath.split("/");
+        const containingSpecialFolderPath = track.folderPath;
+        const grandParentFolderPath = folderParts.slice(0, -1).join("/");
+
+        {
+          const siblings = getImmediateSubFolders(
+            grandParentFolderPath,
+            folderMap,
+          );
+          const containingSegment = containingSpecialFolderPath
+            .split("/")
+            .pop();
+          const idx = siblings.indexOf(containingSegment);
+          if (idx >= 0 && idx < siblings.length - 1) {
+            const nextSiblingName = siblings[idx + 1];
+            const nextSiblingPath = grandParentFolderPath
+              ? `${grandParentFolderPath}/${nextSiblingName}`
+              : nextSiblingName;
+            const firstTrack = getFirstTrackOfFolder(
+              nextSiblingPath,
+              folderMap,
+            );
+            if (firstTrack) return firstTrack;
+          }
+        }
+
+        let ancestorFolderPath = grandParentFolderPath;
+        let childSegment = containingSpecialFolderPath.split("/").pop();
+
+        while (true) {
+          const ancestorEntry = folderMap.get(ancestorFolderPath);
+          if (ancestorEntry && ancestorEntry.audioFiles.length > 0) {
+            const ancestorTracks = sortTracksInFolder(ancestorEntry.audioFiles);
+
+            const intro = ancestorTracks.find((t) => t.type === "intro");
+            if (intro) return intro.relPath;
+
+            const sfp = parseFolderPrefix(childSegment);
+            if (sfp && sfp.prefixNum !== null) {
+              const matchingChoice = ancestorTracks.find(
+                (t) => t.type === "choice" && t.prefixNum === sfp.prefixNum,
+              );
+              if (matchingChoice) return matchingChoice.relPath;
+            }
+
+            break;
+          }
+
+          if (!ancestorFolderPath) break;
+          const parts = ancestorFolderPath.split("/");
+          childSegment = parts[parts.length - 1];
+          ancestorFolderPath = parts.slice(0, -1).join("/");
+        }
+
+        return "";
+      }
+
+      // ---------------------------------------------------------------------------
+      // Row Building
+      // ---------------------------------------------------------------------------
+
+      function buildRows(folderMap, checkpoints, iconMap, confirmSide) {
+        const rows = [];
+
+        function processFolder(folderPath) {
+          const entry = folderMap.get(folderPath);
+
+          if (entry && entry.audioFiles.length > 0) {
+            const sorted = sortTracksInFolder(entry.audioFiles);
+
+            for (const track of sorted) {
+              const icon = resolveIcon(track, iconMap);
+              const checkpointNo = checkpoints.get(track.relPath) ?? null;
+
+              let confirmTarget = "";
+              let rotateTarget = "";
+              let autoAdvance = "";
+
+              switch (track.type) {
+                case "intro": {
+                  const firstChoice = sorted.find((t) => t.type === "choice");
+                  if (!firstChoice) {
+                    throw new Error(
+                      `No choice track to auto-advance to after intro "${track.relPath}"`,
+                    );
+                  }
+                  confirmTarget = firstChoice.relPath;
+                  rotateTarget = firstChoice.relPath;
+                  autoAdvance = firstChoice.relPath;
+                  break;
+                }
+                case "choice": {
+                  confirmTarget = resolveChoiceConfirmTarget(
+                    track,
+                    sorted,
+                    folderMap,
+                  );
+                  rotateTarget = resolveChoiceRotateTarget(track, sorted);
+                  autoAdvance = "";
+                  break;
+                }
+                case "resolution": {
+                  confirmTarget = "";
+                  rotateTarget = "";
+                  autoAdvance = resolveResolutionAutoAdvance(track, folderMap);
+                  break;
+                }
+                case "regular": {
+                  confirmTarget = resolveRegularConfirmTarget(
+                    track,
+                    sorted,
+                    folderMap,
+                  );
+                  rotateTarget = resolveRegularRotateTarget(
+                    track,
+                    sorted,
+                    folderMap,
+                  );
+                  autoAdvance = confirmTarget;
+                  break;
+                }
+              }
+
+              let left, right;
+              if (confirmSide === "right") {
+                right = confirmTarget;
+                left = rotateTarget;
+              } else {
+                left = confirmTarget;
+                right = rotateTarget;
+              }
+
+              rows.push({
+                track: track.relPath,
+                left,
+                right,
+                autoAdvance,
+                checkpointNo,
+                icon,
+              });
+            }
+          }
+
+          const subFolders = getImmediateSubFolders(folderPath, folderMap);
+          for (const sub of subFolders) {
+            const childPath = folderPath ? `${folderPath}/${sub}` : sub;
+            processFolder(childPath);
+          }
+        }
+
+        processFolder("");
+        return rows;
+      }
+
+      // ---------------------------------------------------------------------------
+      // CSV Serialization
+      // ---------------------------------------------------------------------------
+
+      function csvField(value) {
+        const s = value == null ? "" : String(value);
+        if (s.includes(",")) return `"${s}"`;
+        return s;
+      }
+
+      function serializeCSV(rows) {
+        const header = "Track,Left,Right,Auto-Advance,Checkpoint No.,Icon";
+        const lines = [header];
+
+        for (const row of rows) {
+          const fields = [
+            row.track,
+            row.left,
+            row.right,
+            row.autoAdvance,
+            row.checkpointNo == null ? "" : String(row.checkpointNo),
+            row.icon,
+          ].map(csvField);
+          lines.push(fields.join(","));
+        }
+
+        return lines.join("\n") + "\n";
+      }
+
+      // =========================================================================
+      // scanner.js — File System Access API
+      // =========================================================================
+
+      async function scanFolder(dirHandle, _relDir = "") {
+        const results = [];
+
+        for await (const handle of dirHandle.values()) {
+          const relPath = _relDir ? `${_relDir}/${handle.name}` : handle.name;
+
+          if (handle.kind === "directory") {
+            const children = await scanFolder(handle, relPath);
+            results.push(...children);
+          } else if (handle.kind === "file") {
+            const audio = isAudioFile(handle.name);
+            const image = isImageFile(handle.name);
+
+            if (audio || image) {
+              results.push({
+                relPath,
+                folderPath: _relDir,
+                filename: handle.name,
+                isAudio: audio,
+                isImage: image,
+              });
+            }
+          }
+        }
+
+        return results;
+      }
+
+      // =========================================================================
+      // app.js — UI orchestration
+      // =========================================================================
+
+      const state = {
+        apiSupported: typeof showDirectoryPicker !== "undefined",
+        selectedFolderName: null,
+        dirHandle: null,
+        csvContent: null,
+        error: null,
+        isProcessing: false,
+      };
+
+      let confirmSide = "right";
+
+      const btnSelect = document.getElementById("btn-select");
+      const folderNameEl = document.getElementById("folder-name");
+      const statusEl = document.getElementById("status");
+      const downloadSection = document.getElementById("download-section");
+      const btnDownload = document.getElementById("btn-download");
+      const csvPreview = document.getElementById("csv-preview");
+      const csvThead = document.getElementById("csv-thead");
+      const csvTbody = document.getElementById("csv-tbody");
+
+      function showError(message) {
+        state.error = message;
+        statusEl.textContent = message;
+        statusEl.classList.remove("info");
+      }
+
+      function clearStatus() {
+        state.error = null;
+        statusEl.textContent = "";
+        statusEl.classList.remove("info");
+      }
+
+      function showDownload() {
+        downloadSection.style.display = "";
+      }
+
+      function hideDownload() {
+        downloadSection.style.display = "none";
+      }
+
+      function renderCSVPreview(csvContent) {
+        const lines = csvContent.trim().split("\n");
+        if (lines.length < 1) {
+          csvPreview.style.display = "none";
+          return;
+        }
+
+        const parseRow = (line) => {
+          const fields = [];
+          let inQuote = false;
+          let cur = "";
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+              inQuote = !inQuote;
+            } else if (ch === "," && !inQuote) {
+              fields.push(cur);
+              cur = "";
+            } else {
+              cur += ch;
+            }
+          }
+          fields.push(cur);
+          return fields;
+        };
+
+        const headers = parseRow(lines[0]);
+
+        const tr = document.createElement("tr");
+        for (const h of headers) {
+          const th = document.createElement("th");
+          th.textContent = h;
+          tr.appendChild(th);
+        }
+        csvThead.innerHTML = "";
+        csvThead.appendChild(tr);
+
+        csvTbody.innerHTML = "";
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          const cells = parseRow(lines[i]);
+          const row = document.createElement("tr");
+          for (const cell of cells) {
+            const td = document.createElement("td");
+            td.textContent = cell;
+            td.title = cell;
+            row.appendChild(td);
+          }
+          csvTbody.appendChild(row);
+        }
+
+        csvPreview.style.display = "";
+      }
+
+      function hidePreview() {
+        csvPreview.style.display = "none";
+        csvThead.innerHTML = "";
+        csvTbody.innerHTML = "";
+      }
+
+      function setProcessing(processing) {
+        state.isProcessing = processing;
+        btnSelect.disabled = processing;
+      }
+
+      async function runPipeline(dirHandle) {
+        let entries;
+        try {
+          entries = await scanFolder(dirHandle);
+        } catch (err) {
+          throw new Error(`Error reading folder: ${err.message}`);
+        }
+
+        if (entries.length === 0) {
+          throw new Error(
+            "No supported audio or image files were found in the selected folder.",
+          );
+        }
+
+        const folderMap = groupByFolder(entries);
+        validateAllFolders(folderMap);
+        const checkpoints = assignCheckpoints(folderMap);
+        const iconMap = buildIconMap(folderMap);
+        const rows = buildRows(folderMap, checkpoints, iconMap, confirmSide);
+        return serializeCSV(rows);
+      }
+
+      async function onSelectFolder() {
+        clearStatus();
+        hideDownload();
+        hidePreview();
+        state.csvContent = null;
+        setProcessing(true);
+
+        let dirHandle;
+        try {
+          dirHandle = await showDirectoryPicker();
+        } catch (err) {
+          setProcessing(false);
+          if (err.name === "AbortError") return;
+          showError(`Could not access the folder: ${err.message}`);
+          return;
+        }
+
+        state.selectedFolderName = dirHandle.name;
+        state.dirHandle = dirHandle;
+        folderNameEl.textContent = dirHandle.name;
+
+        let csv;
+        try {
+          csv = await runPipeline(dirHandle);
+        } catch (err) {
+          setProcessing(false);
+          showError(err.message);
+          return;
+        }
+
+        state.csvContent = csv;
+        setProcessing(false);
+        showDownload();
+        renderCSVPreview(csv);
+      }
+
+      function onConfirmSideChange(value) {
+        confirmSide = value;
+
+        if (state.dirHandle && state.selectedFolderName !== null) {
+          clearStatus();
+          hideDownload();
+          hidePreview();
+          state.csvContent = null;
+          setProcessing(true);
+
+          runPipeline(state.dirHandle)
+            .then((csv) => {
+              state.csvContent = csv;
+              setProcessing(false);
+              showDownload();
+              renderCSVPreview(csv);
+            })
+            .catch((err) => {
+              setProcessing(false);
+              showError(err.message);
+            });
+        }
+      }
+
+      function onDownload() {
+        if (!state.csvContent) return;
+
+        let url;
+        try {
+          const blob = new Blob([state.csvContent], {
+            type: "text/csv;charset=utf-8",
+          });
+          url = URL.createObjectURL(blob);
+        } catch (err) {
+          showError(
+            "Download failed. The CSV was generated successfully \u2014 please try again.",
+          );
+          return;
+        }
+
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = "playlist.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      }
+
+      // Initialisation
+      if (!state.apiSupported) {
+        btnSelect.disabled = true;
+        showError(
+          "Your browser does not support folder selection. Please use Chrome, Edge, or another Chromium-based browser.",
+        );
+      } else {
+        btnSelect.addEventListener("click", onSelectFolder);
+      }
+
+      const leftActionEl = document.getElementById("left-action");
+      const rightActionEl = document.getElementById("right-action");
+      const btnSwap = document.getElementById("btn-swap");
+
+      function updateControlsDisplay() {
+        if (confirmSide === "right") {
+          leftActionEl.textContent = "Rotate / Return";
+          rightActionEl.textContent = "Confirm / Continue";
+        } else {
+          leftActionEl.textContent = "Confirm / Continue";
+          rightActionEl.textContent = "Rotate / Return";
+        }
+      }
+
+      btnSwap.addEventListener("click", () => {
+        onConfirmSideChange(confirmSide === "right" ? "left" : "right");
+        updateControlsDisplay();
+      });
+
+      btnDownload.addEventListener("click", (e) => {
+        e.preventDefault();
+        onDownload();
+      });
+
+      // ── Help modal ──
+      const helpOverlay = document.getElementById("help-overlay");
+      const btnHelpOpen = document.getElementById("btn-help");
+      const btnHelpClose = document.getElementById("btn-help-close");
+
+      function openHelp() {
+        helpOverlay.classList.add("open");
+        btnHelpClose.focus();
+      }
+
+      function closeHelp() {
+        helpOverlay.classList.remove("open");
+        btnHelpOpen.focus();
+      }
+
+      btnHelpOpen.addEventListener("click", openHelp);
+      btnHelpClose.addEventListener("click", closeHelp);
+
+      // Close on backdrop click
+      helpOverlay.addEventListener("click", (e) => {
+        if (e.target === helpOverlay) closeHelp();
+      });
+
+      // Close on Escape
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && helpOverlay.classList.contains("open")) {
+          closeHelp();
+        }
+      });
+    </script>
+  </body>
+</html>
