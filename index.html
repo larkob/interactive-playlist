@@ -860,12 +860,15 @@ Song 3.mp3</div>
       const checkpoints = new Map();
       let counter = 1;
 
-      const topLevelSubFolders = getImmediateSubFolders("", folderMap);
-      for (const sub of topLevelSubFolders) {
-        const firstTrack = getFirstTrackOfFolder(sub, folderMap);
-        if (firstTrack) {
-          checkpoints.set(firstTrack, counter++);
-        }
+      const rootEntry = folderMap.get("");
+      if (!rootEntry) return checkpoints;
+
+      const rootSpecialTracks = rootEntry.audioFiles
+        .filter((f) => SPECIAL_PREFIX_RE.test(f.filename))
+        .sort((a, b) => a.filename < b.filename ? -1 : a.filename > b.filename ? 1 : 0);
+
+      for (const track of rootSpecialTracks) {
+        checkpoints.set(track.relPath, counter++);
       }
 
       return checkpoints;
