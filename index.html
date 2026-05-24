@@ -391,10 +391,10 @@
         <span class="tag tag-regular">regular</span>
       </p>
       <p>
-        Regular tracks play one after another. The Yoto knob moves
-        <strong>forward</strong> (confirm/continue) to the next track and
-        <strong>backward</strong> (rotate/return) to the previous one. When
-        the last track in a folder finishes it returns to the parent menu
+        Regular tracks play one after another. The Yoto knob always moves
+        <strong>forward</strong> (right / continue) to the next track and
+        <strong>backward</strong> (left / return) to the previous one. 
+        When the last track in a folder finishes, it returns to the parent menu
         automatically.
       </p>
 
@@ -402,10 +402,6 @@
       <div class="file-tree">Song 1.mp3
 Song 2.mp3
 Song 3.mp3</div>
-      <p>
-        Tracks play in alphabetical order. Rotating goes back one track;
-        confirming skips forward. No special naming needed.
-      </p>
 
       <hr class="divider" />
 
@@ -565,7 +561,7 @@ Song 3.mp3</div>
       <h3>Checkpoints</h3>
       <p>
         A <em>checkpoint</em> lets the listener jump straight to a particular
-        track using the Yoto app's "go to" feature. You don't need to do
+        track using the Yoto player's "twist right know" feature. You don't need to do
         anything special to create one — just use a
         <code>#01</code>–<code>#98</code> file name in the <strong>root folder</strong>.
       </p>
@@ -631,7 +627,7 @@ Song 3.mp3</div>
 
   <div class="container">
     <h1>
-      Yoto CSV Generator <button id="btn-help" type="button">? Help</button>
+      Yoto CSV Generator for Interactive Studio <button id="btn-help" type="button">? Help</button>
     </h1>
 
     <div class="field-group">
@@ -640,7 +636,7 @@ Song 3.mp3</div>
     </div>
 
     <div class="field-group">
-      <label>Controls</label>
+      <label>Controls (applies to special tracks only — regular tracks are always Left back / Right forward)</label>
       <div class="controls-row">
         <div class="controls-sides">
           <div class="controls-side">
@@ -1193,20 +1189,31 @@ Song 3.mp3</div>
                 autoAdvance = resolveResolutionAutoAdvance(track, folderMap);
                 break;
               }
-              case "regular": {
-                confirmTarget = resolveRegularConfirmTarget(
-                  track,
-                  sorted,
-                  folderMap,
-                );
-                rotateTarget = resolveRegularRotateTarget(
-                  track,
-                  sorted,
-                  folderMap,
-                );
-                autoAdvance = confirmTarget;
-                break;
-              }
+            }
+
+            if (track.type === "regular") {
+              confirmTarget = resolveRegularConfirmTarget(
+                track,
+                sorted,
+                folderMap,
+              );
+              rotateTarget = resolveRegularRotateTarget(
+                track,
+                sorted,
+                folderMap,
+              );
+              // Regular tracks are not affected by the confirm-side toggle.
+              // Left is always rotate (previous), right is always confirm (next).
+              autoAdvance = confirmTarget;
+              rows.push({
+                track: track.relPath,
+                left: rotateTarget,
+                right: confirmTarget,
+                autoAdvance,
+                checkpointNo,
+                icon,
+              });
+              continue;
             }
 
             let left, right;
